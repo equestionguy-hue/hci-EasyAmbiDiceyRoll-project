@@ -1,0 +1,267 @@
+﻿@page "/"
+@using System.Text.Json
+@using System.Security.Cryptography
+@using EasyAmbiDiceyRoll.Components
+@using EasyAmbiDiceyRoll.Models
+@using EasyAmbiDiceyRoll.Services
+@inject IJSRuntime JSRuntime
+
+<div class="app-container" style="--accent-color: @accentColor; --bg-color: #0d0d0d; --panel-bg: #1a1a1a;">
+    <!-- Game mode selector -->
+    <div class="top-header @(isModifierMenuOpen ? "hidden-on-mobile" : "")">
+        <label>Game Mode:</label>
+        <select class="system-dropdown" value="@currentProfile.SystemMode" @onchange="HandleSystemModeChange">
+            <option value="@GameSystem.Standard">Standard</option>
+            <option value="@GameSystem.DungeonsAndDragons5">Dungeons & Dragons</option>
+            <option value="@GameSystem.WorldOfDarkness">World of Darkness</option>
+        </select>
+        <input type="color" class="color-picker" @bind="accentColor" @bind:after="SaveThemeColor" title="Change Theme Color" />
+        <button class="options-btn" @onclick="() => showEditorModal = true">Options</button>
+    </div>
+
+    <!-- Dice tray -->
+    <div class="dice-tray">
+        @foreach (var sides in ActiveAvailableDice)
+        {
+            <div class="die-wrapper">
+                <button class="die-button" @onclick="() => OnDieClicked(sides)">
+                    D@(sides)
+                </button>
+                @if (currentProfile.SelectedDice[sides] > 0)
+                {
+                    <span class="die-badge">@currentProfile.SelectedDice[sides]</span>
+                }
+            </div>
+        }
+    </div>
+
+    <!-- Saved Profiles Grid -->
+    <div class="saved-profiles-section">
+        <h3>Game Actions</h3>
+        @if (!FilteredProfiles.Any())
+        {
+            <p class="empty-state">No Game Actions saved for @currentProfile.SystemMode yet.</p>
+        }
+        else
+        {
+            <div class="profile-grid">
+                @foreach (var profile in FilteredProfiles)
+                {
+                    <button class="profile-card" @onclick="() => ExecuteSavedProfile(profile)">
+                        <h4>@profile.Name</h4>
+                    </button>
+                }
+            </div>
+        }
+    </div>
+
+    <!-- Modification menu -->
+    <div class="bottom-sheet @(isModifierMenuOpen ? "open" : "")">
+        <ModificationMenu
+            Profile="currentProfile"
+            OnCloseMenu="HandleCloseMenu"
+            OnRollRequested="HandleRollRequested" />
+    </div>
+
+
+    <!-- Modals -->
+
+    <!-- Results modal -->
+    @if (showResultsModal && currentResult != null)
+    {
+        <ResultsModal
+            Result="currentResult"
+            Profile="currentProfile"
+            OnClose="HandleCloseModal"
+            OnSaveProfile="HandleSaveProfile" />
+    }
+
+    <!-- Save Profile Modal -->
+    @if (showSaveModal)
+    {
+        <SaveProfileModal
+            Profile="profileToSave"
+            OnClose="HandleCloseSaveModal"
+            OnSave="CommitProfileSave" />
+    }
+
+    <!-- Editor modal -->
+    @if (showEditorModal)
+    {
+        <ProfileEditorModal
+            Profiles="savedProfiles"
+            OnClose="() => showEditorModal = false"
+            OnProfilesUpdated="HandleProfilesUpdated" />
+    }
+
+</div>
+
+@code {
+    private IEnumerable<int> ActiveAvailableDice => currentProfile.SystemMode switch
+    {
+        GameSystem.WorldOfDarkness => new[] { 10 },
+        _ => new[] {
+    4, 6, 8, 10, 12, 20, 100 }
+    };
+    private const string LocalStorageKey = "savedGameProfiles";
+
+    // State variables
+    private GameActionProfile currentProfile = new();
+    private GameActionProfile activeRollProfile = new(); // Tracks what is actively being rolled in the modal
+    private List<GameActionProfile> savedProfiles = new();
+    private IEnumerable<GameActionProfile> FilteredProfiles => savedProfiles.Where(p => p.SystemMode == currentProfile.SystemMode);
+    private GameActionProfile profileToSave = new();
+    private string accentColor = "#FFF01F"; // Default accent color Neon yellow #FFF01F
+    private const string ThemeStorageKey = "appThemeColor";
+
+    private DiceCalculationService diceService = new();
+    private RollResult? currentResult;
+
+    private bool isModifierMenuOpen = false;
+    private bool showResultsModal = false;
+    private bool showSaveModal = false;
+    private bool showEditorModal = false;
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadProfiles();
+
+        var savedColor = await JSRuntime.InvokeAsync<string>("localStorage.getItem", ThemeStorageKey);
+        if (!string.IsNullOrEmpty(savedColor))
+        {
+            accentColor = savedColor;
+        }
+    }
+
+    private async Task LoadProfiles()
+    {
+        var existingJson = await JSRuntime.InvokeAsync<string>("localStorage.getItem", LocalStorageKey);
+        if (!string.IsNullOrEmpty(existingJson))
+        {
+            savedProfiles = JsonSerializer.Deserialize<List<GameActionProfile>>(existingJson) ?? new List<GameActionProfile>();
+        }
+    }
+
+    private async Task SaveThemeColor()
+    {
+        await JSRuntime.InvokeVoidAsync("localStorage.setItem", ThemeStorageKey, accentColor);
+    }
+
+    private void OnDieClicked(int sides)
+    {
+        // Makes clicking the top tray increment the model
+        currentProfile.SelectedDice[sides]++;
+        isModifierMenuOpen = true;
+    }
+
+    private void HandleCloseMenu()
+    {
+        ClearTrayAndKeepMode();
+        isModifierMenuOpen = false;
+    }
+
+    private void HandleRollRequested()
+    {
+        // Generate the math and trigger the modal to appear
+        activeRollProfile = currentProfile;
+        currentResult = diceService.CalculateRoll(currentProfile);
+        showResultsModal = true;
+    }
+
+    private void ExecuteSavedProfile(GameActionProfile profile)
+    {
+        activeRollProfile = profile;
+        currentResult = diceService.CalculateRoll(profile);
+        showResultsModal = true; // Open results without slide effect
+    }
+
+    private void HandleCloseModal()
+    {
+        showResultsModal = false;
+        isModifierMenuOpen = false;
+        ClearTrayAndKeepMode();
+    }
+
+    private void HandleSaveProfile()
+    {
+        // Close the result modal and open the save modal
+        showResultsModal = false;
+
+        // Create a fresh clone of the roll to avoid editing existing profiles
+        profileToSave = new GameActionProfile
+        {
+            Name = activeRollProfile.Name,
+            SystemMode = activeRollProfile.SystemMode,
+            ModifierValue = activeRollProfile.ModifierValue,
+            SelectedDice = new Dictionary<int, int>(activeRollProfile.SelectedDice),
+            HasAdvantage = activeRollProfile.HasAdvantage,
+            HasDisadvantage = activeRollProfile.HasDisadvantage,
+            ExplodingDiceThreshold = activeRollProfile.ExplodingDiceThreshold
+        };
+        showSaveModal = true;
+    }
+
+    private void HandleCloseSaveModal()
+    {
+        showSaveModal = false;
+    }
+
+    private void ClearTrayAndKeepMode()
+    {
+        // Remember active game mode
+        var activeMode = currentProfile.SystemMode;
+        // Wipe dice tray clean
+        currentProfile = new GameActionProfile();
+        // re-apply game mode
+        currentProfile.SystemMode = activeMode;
+    }
+
+    private void HandleSystemModeChange(ChangeEventArgs e)
+    {
+        if (Enum.TryParse<GameSystem>(e.Value?.ToString(), out var newMode))
+        {
+            // Change the mode
+            currentProfile.SystemMode = newMode;
+            // Wipe any dice selected in the previous mode
+            ClearTrayAndKeepMode();
+            // Slide the menu down if open
+            isModifierMenuOpen = false;
+        }
+    }
+
+    private async Task HandleProfilesUpdated(List<GameActionProfile> updatedProfiles)
+    {
+        // Replace the in-memory list and push the new list to localStorage
+        savedProfiles = updatedProfiles;
+        var updatedJson = JsonSerializer.Serialize(savedProfiles);
+        await JSRuntime.InvokeVoidAsync("localStorage.setItem", LocalStorageKey, updatedJson);
+    }
+
+    private async Task CommitProfileSave(GameActionProfile profileToSave)
+    {
+        // Assign new ID if new save
+        if (profileToSave.Id == Guid.Empty)
+        {
+            profileToSave.Id = Guid.NewGuid();
+        }
+
+        // Check if overwriting an existing profile or add a new one
+        var existingIndex = savedProfiles.FindIndex(p => p.Id == profileToSave.Id);
+        if (existingIndex >= 0)
+        {
+            savedProfiles[existingIndex] = profileToSave;
+        }
+        else
+        {
+            savedProfiles.Add(profileToSave);
+        }
+
+        // Serialize the updated list and save it back to browser
+        var updatedJson = JsonSerializer.Serialize(savedProfiles);
+        await JSRuntime.InvokeVoidAsync("localStorage.setItem", LocalStorageKey, updatedJson);
+
+        showSaveModal = false;
+        await LoadProfiles(); // Refresh the grid on home page
+    }
+}

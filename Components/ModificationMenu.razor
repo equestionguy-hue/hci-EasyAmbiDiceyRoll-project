@@ -1,0 +1,103 @@
+@using EasyAmbiDiceyRoll.Models
+
+<div class="modification-menu">
+    <div class="menu-header">
+        <h3>Modify Roll</h3>
+        <button class="close-icon" @onclick="OnCloseMenu">Clear / Close</button>
+    </div>
+
+    <!-- Dice Count Adjustment (+/-) -->
+    <div class="dice-adjustments">
+        @foreach (var kvp in Profile.SelectedDice.Where(d => d.Value > 0).ToList())
+        {
+            <div class="dice-counter">
+                <span class="die-label">D@(kvp.Key)</span>
+                <button class="adjust-btn" @onclick="() => AdjustDieCount(kvp.Key, -1)">-</button>
+                <span class="die-count">@kvp.Value</span>
+                <button class="adjust-btn" @onclick="() => AdjustDieCount(kvp.Key, 1)">+</button>
+            </div>
+        }
+    </div>
+
+    <!-- Standard Modifier -->
+    <div class="modifier-input">
+        <label>Flat Modifier (+/-):</label>
+        <input type="number" @bind="Profile.ModifierValue" />
+    </div>
+
+    <!-- Dynamic Game-Specific Features -->
+    <div class="system-options">
+        @if (Profile.SystemMode == GameSystem.DungeonsAndDragons5)
+        {
+            <div class="dnd-options">
+                <label>
+                    <input type="checkbox" 
+                           checked="@Profile.HasAdvantage" 
+                           @onchange="ToggleAdvantage" 
+                           disabled="@Profile.HasDisadvantage" /> 
+                    Advantage
+                </label>
+                <label>
+                    <input type="checkbox" 
+                           checked="@Profile.HasDisadvantage" 
+                           @onchange="ToggleDisadvantage" 
+                           disabled="@Profile.HasAdvantage" /> 
+                    Disadvantage
+                </label>
+            </div>
+        }
+        else if (Profile.SystemMode == GameSystem.WorldOfDarkness)
+        {
+            <div class="wod-options">
+                <label>Exploding Dice Threshold:</label>
+                <select @bind="Profile.ExplodingDiceThreshold">
+                    <option value="0">None</option>
+                    <option value="10">10-Again</option>
+                    <option value="9">9-Again</option>
+                    <option value="8">8-Again</option>
+                </select>
+            </div>
+        }
+    </div>
+
+    <button class="roll-button" @onclick="OnRollRequested">Roll Dice</button>
+</div>
+
+@code {
+    [Parameter]
+    public GameActionProfile Profile { get; set; } = default!;
+
+    [Parameter]
+    public EventCallback OnCloseMenu { get; set; }
+
+    [Parameter]
+    public EventCallback OnRollRequested { get; set; }
+
+    private void AdjustDieCount(int sides, int amount)
+    {
+        if (Profile.SelectedDice.ContainsKey(sides))
+        {
+            Profile.SelectedDice[sides] += amount;
+            
+            // Ensure count doesn't drop below 0
+            // At 0, the .Where(d => d.Value > 0) check hides it from the menu
+            if (Profile.SelectedDice[sides] < 0)
+            {
+                Profile.SelectedDice[sides] = 0;
+            }
+        }
+    }
+
+    // Custom toggles enforce mutual exclusivity for D&D mechanics
+    private void ToggleAdvantage(ChangeEventArgs e)
+    {
+        Profile.HasAdvantage = (bool)(e.Value ?? false);
+        if (Profile.HasAdvantage) Profile.HasDisadvantage = false;
+    }
+
+    private void ToggleDisadvantage(ChangeEventArgs e)
+    {
+        Profile.HasDisadvantage = (bool)(e.Value ?? false);
+        if (Profile.HasDisadvantage) Profile.HasAdvantage = false;
+    }
+}

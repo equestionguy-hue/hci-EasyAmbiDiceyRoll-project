@@ -1,0 +1,31 @@
+@using EasyAmbiDiceyRoll.Models
+
+<div class="modal-backdrop">
+    <div class="profile-modal">
+        <div class="modal-header">
+            <h2>Save Game Action</h2>
+            <button class="close-icon-btn" @onclick="OnClose">X</button>
+        </div>
+
+        <div class="modal-body">
+            <label for="action-name">Action Name:</label>
+            <input id="action-name" type="text" @bind="Profile.Name" placeholder="e.g., Fireball, Stealth Check..." />
+        </div>
+
+        <div class="modal-footer">
+            <button class="save-button" @onclick="() => OnSave.InvokeAsync(Profile)">Save</button>
+            <button class="close-button" @onclick="OnClose">Cancel</button>
+        </div>
+    </div>
+</div>
+
+@code {
+    [Parameter]
+    public GameActionProfile Profile { get; set; } = default!;
+
+    [Parameter]
+    public EventCallback OnClose { get; set; }
+
+    [Parameter]
+    public EventCallback<GameActionProfile> OnSave { get; set; }
+}

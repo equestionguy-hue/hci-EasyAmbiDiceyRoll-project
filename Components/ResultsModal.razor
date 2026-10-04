@@ -1,0 +1,75 @@
+@using EasyAmbiDiceyRoll.Models
+
+<div class="modal-backdrop">
+    <div class="results-modal">
+        <div class="modal-header">
+            <h2>Roll Result</h2>
+            <button class="close-icon-btn" @onclick="OnClose">X</button>
+        </div>
+
+        <div class="modal-body">
+            @if (Profile.SystemMode == GameSystem.WorldOfDarkness)
+            {
+                <div class="wod-results">
+                    @if (Result.IsCriticalFailure)
+                    {
+                        <h3 class="critical-failure">CRITICAL FAILURE (BOTCH)</h3>
+                    }
+                    else if (Result.IsFailure)
+                    {
+                        <h3 class="failure">Failure (0 Successes)</h3>
+                    }
+                    else
+                    {
+                        <h3 class="successes">@Result.Successes Success@(Result.Successes == 1 ? "" : "es")</h3>
+                    }
+
+                    <div class="dice-breakdown">
+                        <p><strong>Base Rolls:</strong> @string.Join(", ", Result.StandardRolls)</p>
+                        @if (Result.ExplodedRolls.Any())
+                        {
+                            <p><strong>Exploded (Bonus):</strong> @string.Join(", ", Result.ExplodedRolls)</p>
+                        }
+                    </div>
+                </div>
+            }
+            else
+            {
+                <div class="standard-results">
+                    <h3 class="total-score">Total: @Result.TotalValue</h3>
+                    <p class="details">(Dice: @Result.BaseRollTotal | Mod: @(Result.ModifierValue >= 0 ? "+" : "")@Result.ModifierValue)</p>
+
+                    <div class="dice-breakdown">
+                        <p><strong>Rolls Kept:</strong> @string.Join(", ", Result.StandardRolls)</p>
+
+                        @if (Profile.SystemMode == GameSystem.DungeonsAndDragons5 && Result.DiscardedRolls.Any())
+                        {
+                            <p class="discarded">
+                                <strong>Discarded:</strong> <del>@string.Join(", ", Result.DiscardedRolls)</del>
+                            </p>
+                        }
+                    </div>
+                </div>
+            }
+        </div>
+
+        <div class="modal-footer">
+            <button class="save-button" @onclick="OnSaveProfile">Save Game Action</button>
+            <button class="close-button" @onclick="OnClose">Close</button>
+        </div>
+    </div>
+</div>
+
+@code {
+    [Parameter]
+    public RollResult Result { get; set; } = default!;
+
+    [Parameter]
+    public GameActionProfile Profile { get; set; } = default!;
+
+    [Parameter]
+    public EventCallback OnClose { get; set; }
+
+    [Parameter]
+    public EventCallback OnSaveProfile { get; set; }
+}

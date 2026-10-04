@@ -1,0 +1,132 @@
+@using System.ComponentModel.Design
+@using System.Data
+@using EasyAmbiDiceyRoll.Models
+
+<div class="modal-backdrop">
+    <div class="editor-modal">
+        <div class="modal-header">
+            <h2>@(GetHeaderText())</h2>
+            <button class="close-icon-btn" @onclick="CloseEntireModal">X</button>
+        </div>
+
+        <div class="modal-body">
+            @if (currentView == ViewState.List)
+            {
+                <div class="profile-list">
+                    @foreach (var profile in Profiles)
+                    {
+                        <button class="list-item" @onclick="() => OpenEdit(profile)">
+                            @profile.Name
+                        </button>
+                    }
+                </div>
+            }
+            else if (currentView == ViewState.Edit && activeProfile != null)
+            {
+                <div class="edit-form">
+                    <label>Action Name:</label>
+                    <input type="text" @bind="activeProfile.Name" />
+
+                    <label>Flat Modifier:</label>
+                    <input type="number" @bind="activeProfile.ModifierValue" />
+
+                    <label>Game System:</label>
+                    <select @bind="activeProfile.SystemMode">
+                        <option value="@GameSystem.Standard">Standard</option>
+                        <option value="@GameSystem.DungeonsAndDragons5">Dungeons & Dragons</option>
+                        <option value="@GameSystem.WorldOfDarkness">World of Darkness</option>
+                    </select>
+                </div>
+            }
+            else if (currentView == ViewState.DeleteConfirm && activeProfile != null)
+            {
+                <div class="delete-warning">
+                    <p>Are you sure you want to delete <strong>@activeProfile.Name</strong></p>
+                    <p class="sub-text">This action cannot be undone.</p>
+                </div>
+            }
+        </div>
+
+        <div class="modal-footer">
+            @if (currentView == ViewState.List)
+            {
+                <button class="close-button" @onclick="CloseEntireModal">Close</button>
+            }
+            else if (currentView == ViewState.Edit)
+            {
+                <button class="danger-button" @onclick="() => currentView = ViewState.DeleteConfirm">Delete</button>
+                <button class="save-button" @onclick="SaveChanges">Save</button>
+                <button class="close-button" @onclick="BackToList">Cancel</button>
+            }
+            else if (currentView == ViewState.DeleteConfirm)
+            {
+                <button class="danger-button" @onclick="ConfirmDelete">Yes</button>
+                <button class="close-button" @onclick="() => currentView = ViewState.Edit">No</button>
+            }
+        </div>
+    </div>
+</div>
+
+@code {
+    [Parameter] public List<GameActionProfile> Profiles { get; set; } = new();
+    [Parameter] public EventCallback OnClose { get; set; }
+    [Parameter] public EventCallback<List<GameActionProfile>> OnProfilesUpdated { get; set; }
+
+    private enum ViewState { List, Edit, DeleteConfirm }
+    private ViewState currentView = ViewState.List;
+    private GameActionProfile? activeProfile;
+
+    private string GetHeaderText() => currentView switch
+    {
+        ViewState.List => "Game Action Profiles",
+        ViewState.Edit => "Edit Profile",
+        ViewState.DeleteConfirm => "Are you sure?",
+        _ => ""
+    };
+
+    private void OpenEdit(GameActionProfile profile)
+    {
+        // Clone the profile so edits are not saved if the user clicks cancel
+        activeProfile = new GameActionProfile
+        {
+            Id = profile.Id,
+            Name = profile.Name,
+            ModifierValue = profile.ModifierValue,
+            SystemMode = profile.SystemMode,
+            SelectedDice = new Dictionary<int, int>(profile.SelectedDice),
+            HasAdvantage = profile.HasAdvantage,
+            HasDisadvantage = profile.HasDisadvantage,
+            ExplodingDiceThreshold = profile.ExplodingDiceThreshold
+        };
+        currentView = ViewState.Edit;
+    }
+
+    private void BackToList()
+    {
+        activeProfile = null;
+        currentView = ViewState.List;
+    }
+
+    private async Task SaveChanges()
+    {
+        if (activeProfile != null)
+        {
+            var index = Profiles.FindIndex(p => p.Id == activeProfile.Id);
+            if (index >= 0) Profiles[index] = activeProfile;
+
+            await OnProfilesUpdated.InvokeAsync(Profiles);
+            BackToList();
+        }
+    }
+
+    private async Task ConfirmDelete()
+    {
+        if (activeProfile != null)
+        {
+            Profiles.RemoveAll(p => p.Id == activeProfile.Id);
+            await OnProfilesUpdated.InvokeAsync(Profiles);
+            BackToList();
+        }
+    }
+    private void CloseEntireModal() => OnClose.InvokeAsync();
+}

@@ -1,0 +1,222 @@
+.app-container[b-d49s77ud0f] {
+    padding: 2rem;
+    max-width: 800px;
+    margin: 0 auto;
+    color: var(--accent-color);
+    min-height: 100vh
+}
+
+.dice-tray[b-d49s77ud0f] {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    justify-content: center;
+    margin-bottom: 2rem;
+}
+
+.die-wrapper[b-d49s77ud0f] {
+    position: relative;
+}
+
+.die-button[b-d49s77ud0f] {
+    width: 60px;
+    height: 60px;
+    border-radius: 12px;
+    background-color: var(--panel-bg);
+    color: var(--accent-color);
+    font-weight: bold;
+    font-size: 1.2rem;
+    border: 2px solid var(--accent-color);
+    cursor: pointer;
+    transition: transform 0.1s;
+}
+
+.die-button:active[b-d49s77ud0f] {
+    transform: scale(0.95);
+    background-color: var(--accent-color);
+    color: var(--bg-color);
+}
+
+.die-badge[b-d49s77ud0f] {
+    position: absolute;
+    top: -8px;
+    right: -8px;
+    background-color: var(--accent-color);
+    color: var(--bg-color);
+    border-radius: 50%;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.8rem;
+    font-weight: bold;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.5);
+}
+
+.top-header[b-d49s77ud0f] {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+    margin-bottom: 2rem;
+    background-color: var(--panel-bg);
+    padding: 1rem;
+    border-radius: 8px;
+    border: 1px solid var(--accent-color);
+}
+
+.system-dropdown[b-d49s77ud0f] {
+    padding: 0.5rem;
+    font-size: 1.1rem;
+    border-radius: 6px;
+    border: 1px solid var(--accent-color);
+    background-color: var(--bg-color);
+    color: var(--accent-color);
+}
+
+/* Color Picker Styling */
+.color-picker[b-d49s77ud0f] {
+    -webkit-appearance: none;
+    border: 1px solid var(--accent-color);
+    border-radius: 4px;
+    width: 35px;
+    height: 35px;
+    background-color: var(--bg-color);
+    cursor: pointer;
+    padding: 2px;
+    margin-left: auto;
+}
+
+.options-btn[b-d49s77ud0f] {
+    background-color: transparent;
+    color: var(--accent-color);
+    border: 1px solid var(--accent-color);
+    padding: 0.5rem 1rem;
+    border-radius: 6px;
+    cursor: pointer;
+}
+
+/* Saved Profiles Grid */
+.saved-profiles-section[b-d49s77ud0f] {
+    margin-top: 2rem;
+    padding-bottom: 150px; /* Gives space so the slider doesn't permanently cover the last row */
+}
+
+.empty-state[b-d49s77ud0f] {
+    color: var(--accent-color);
+    opacity: 0.7;
+    font-style: italic;
+    text-align: center;
+}
+
+.profile-grid[b-d49s77ud0f] {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 1rem;
+}
+
+.profile-card[b-d49s77ud0f] {
+    background-color: var(--panel-bg);
+    color: var(--accent-color);
+    border: none;
+    border-radius: 8px;
+    padding: 1rem;
+    cursor: pointer;
+    transition: transform 0.1s, background-color 0.2s;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+}
+
+.profile-card h4[b-d49s77ud0f] {
+    margin: 0;
+    font-size: 1.1rem;
+}
+
+.profile-card:active[b-d49s77ud0f] {
+    transform: scale(0.95);
+    background-color: var(--accent-color);
+    color: var(--bg-color);
+}
+
+/* Sliding Bottom Sheet */
+.bottom-sheet[b-d49s77ud0f] {
+    position: fixed;
+    bottom: -100%;
+    left: 0;
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    transition: bottom 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    z-index: 100;
+    pointer-events: none; /* Prevents invisible blocking */
+}
+
+.bottom-sheet.open[b-d49s77ud0f] {
+    bottom: 0;
+    pointer-events: auto;
+}
+
+.bottom-sheet.open[b-d49s77ud0f] {
+    bottom: 0;
+    pointer-events: auto;
+}
+
+/* Force the ModificationMenu component to look like a bottom drawer */
+.bottom-sheet[b-d49s77ud0f]  .modification-menu {
+    margin: 0;
+    width: 100%;
+    max-width: 600px;
+    max-height: 70vh;
+    overflow-y: auto;
+    border-bottom-left-radius: 0;
+    border-bottom-right-radius: 0;
+    box-shadow: 0 -4px 15px rgba(0,0,0,0.5);
+}
+
+/* Hides the scrollbar for webkit browser. Chrome, Safari, Edge. */
+.bottom-sheet[b-d49s77ud0f]  .modification-menu::-webkit-scrollbar {
+    display: none;
+}
+
+/* Hides the scrollbar for Firefox */
+.bottom-sheet[b-d49s77ud0f] {
+    scrollbar-width: none;;
+}
+
+/* Mobile Styling */
+@media (max-width: 600px) {
+
+    .top-header.hidden-on-mobile[b-d49s77ud0f] {
+        display: none;
+    }
+
+    .app-container[b-d49s77ud0f] {
+        padding: 1rem 0.5rem;
+    }
+
+    .top-header[b-d49s77ud0f] {
+        flex-wrap: wrap;
+        padding: 0.75rem;
+        gap: 0.5rem;
+    }
+
+    .system-dropdown[b-d49s77ud0f] {
+        flex: 1 1 100%;
+        text-align: center;
+    }
+
+    .die-button[b-d49s77ud0f] {
+        width: 55px;
+        height: 55px;
+        font-size: 1.1rem;
+    }
+
+    .profile-grid[b-d49s77ud0f] {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .button-sheet[b-d49s77ud0f]  .modification-menu {
+        padding: 1rem;
+        padding-bottom: 2rem;
+    }
+}
