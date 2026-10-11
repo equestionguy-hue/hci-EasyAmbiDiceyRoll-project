@@ -8,15 +8,21 @@
 
 <div class="app-container" style="--accent-color: @accentColor; --bg-color: #0d0d0d; --panel-bg: #1a1a1a;">
     <!-- Game mode selector -->
-    <div class="top-header @(isModifierMenuOpen ? "hidden-on-mobile" : "")">
+    <div class='top-header @(isModifierMenuOpen ? "hidden-on-mobile" : "")'>
         <label>Game Mode:</label>
         <select class="system-dropdown" value="@currentProfile.SystemMode" @onchange="HandleSystemModeChange">
             <option value="@GameSystem.Standard">Standard</option>
             <option value="@GameSystem.DungeonsAndDragons5">Dungeons & Dragons</option>
             <option value="@GameSystem.WorldOfDarkness">World of Darkness</option>
         </select>
-        <input type="color" class="color-picker" @bind="accentColor" @bind:after="SaveThemeColor" title="Change Theme Color" />
-        <button class="options-btn" @onclick="() => showEditorModal = true">Options</button>
+        <!-- Hamburger Menu Button -->
+        <button class="options-btn" @onclick="() => activeModal = ModalState.Options" aria-label="Options">
+            <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="3" y1="12" x2="21" y2="12"></line>
+                <line x1="3" y1="6" x2="21" y2="6"></line>
+                <line x1="3" y1="18" x2="21" y2="18"></line>
+            </svg>
+        </button>
     </div>
 
     <!-- Dice tray -->
@@ -85,13 +91,33 @@
             OnSave="CommitProfileSave" />
     }
 
-    <!-- Editor modal -->
-    @if (showEditorModal)
+    <!-- Options modal -->
+    @if (activeModal == ModalState.Options)
     {
-        <ProfileEditorModal
+        <OptionsMenuModal 
+            OnOpenProfiles="() => activeModal = ModalState.ProfileEditor"
+            OnOpenTheme="() => activeModal = ModalState.ThemeEditor"
+            OnOpenCredits="() => activeModal = ModalState.Credits"
+            OnClose="() => activeModal = ModalState.None" />
+    }
+    else if (activeModal == ModalState.ProfileEditor)
+    {
+        <ProfileEditorModal 
             Profiles="savedProfiles"
-            OnClose="() => showEditorModal = false"
+            OnClose="() => activeModal = ModalState.Options"
             OnProfilesUpdated="HandleProfilesUpdated" />
+    }
+    else if (activeModal == ModalState.ThemeEditor)
+    {
+        <ThemeEditorModal 
+            CurrentColor="@accentColor"
+            OnColorChanged="UpdateAccentColor"
+            OnColorSaved="CommitAccentColor"
+            OnClose="() => activeModal = ModalState.Options" />
+    }
+    else if (activeModal == ModalState.Credits)
+    {
+        <CreditsModal OnClose="() => activeModal = ModalState.Options" />
     }
 
 </div>
@@ -113,6 +139,8 @@
     private GameActionProfile profileToSave = new();
     private string accentColor = "#FFF01F"; // Default accent color Neon yellow #FFF01F
     private const string ThemeStorageKey = "appThemeColor";
+    private enum ModalState { None, Options, ProfileEditor, ThemeEditor, Credits }
+    private ModalState activeModal = ModalState.None;
 
     private DiceCalculationService diceService = new();
     private RollResult? currentResult;
@@ -120,7 +148,6 @@
     private bool isModifierMenuOpen = false;
     private bool showResultsModal = false;
     private bool showSaveModal = false;
-    private bool showEditorModal = false;
 
 
     protected override async Task OnInitializedAsync()
@@ -228,6 +255,17 @@
             // Slide the menu down if open
             isModifierMenuOpen = false;
         }
+    }
+
+    private void UpdateAccentColor(string newColor)
+    {
+        accentColor = newColor;
+    }
+
+    private async Task CommitAccentColor(string newColor)
+    {
+        accentColor = newColor;
+        await SaveThemeColor(); // save to local storage
     }
 
     private async Task HandleProfilesUpdated(List<GameActionProfile> updatedProfiles)

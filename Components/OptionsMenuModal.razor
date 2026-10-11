@@ -1,0 +1,21 @@
+<div class="modal-backdrop">
+    <div class="options-modal">
+        <div class="modal-header">
+            <h2>Options</h2>
+            <button class="close-icon-btn" @onclick="OnClose">X</button>
+        </div>
+
+        <div class="modal-body">
+            <button class="menu-btn" @onclick="OnOpenProfiles">Edit Game Action Profiles</button>
+            <button class="menu-btn" @onclick="OnOpenTheme">Edit Theme</button>
+            <button class="menu-btn" @onclick="OnOpenCredits">Thanks To</button>
+        </div>
+    </div>
+</div>
+
+@code {
+    [Parameter] public EventCallback OnOpenProfiles { get; set; }
+    [Parameter] public EventCallback OnOpenTheme { get; set; }
+    [Parameter] public EventCallback OnOpenCredits { get; set; }
+    [Parameter] public EventCallback OnClose { get; set; }
+}

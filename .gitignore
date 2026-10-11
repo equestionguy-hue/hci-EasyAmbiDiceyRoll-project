@@ -1,0 +1,20 @@
+# .NET Core / Blazor build folders
+bin/
+obj/
+
+# Visual Studio / VS Code local settings
+.vs/ 
+.vscode/
+*.user
+*.suo
+*.userprefs
+*.sln.docstates
+
+# Mac system files
+.DS_Store
+
+# Node/NPM (in case you ever use Tailwind or NPM packages)
+node_modules/
+
+# Local configuration files
+appsettings.Development.json

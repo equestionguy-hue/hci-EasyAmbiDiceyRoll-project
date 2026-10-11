@@ -92,9 +92,19 @@
     background-color: transparent;
     color: var(--accent-color);
     border: 1px solid var(--accent-color);
-    padding: 0.5rem 1rem;
+    padding: 0.5rem;
     border-radius: 6px;
     cursor: pointer;
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: 0.1s;
+}
+
+.options-btn:active {
+    background-color: var(--accent-color);
+    color: var(--bg-color);
 }
 
 /* Saved Profiles Grid */

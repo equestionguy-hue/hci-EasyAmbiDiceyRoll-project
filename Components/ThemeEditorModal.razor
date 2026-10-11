@@ -1,0 +1,42 @@
+<div class="modal-backdrop">
+    <div class="theme-modal">
+        <div class="modal-header">
+            <h2>Edit Theme</h2>
+            <button class="close-icon-btn" @onclick="OnClose">X</button>
+        </div>
+        
+        <div class="modal-body">
+            <div class="color-picker-container">
+                <label>Custom Accent Color:</label>
+                <input type="color" class="color-picker" 
+                       value="@CurrentColor" 
+                       @oninput="HandleColorInput" 
+                       @onchange="HandleColorChange" />
+            </div>
+            
+            <div class="preset-themes">
+                <h3>Preset Themes</h3>
+                <p class="placeholder-text">Theme options coming soon...</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    [Parameter] public string CurrentColor { get; set; } = "#00ffcc";
+    [Parameter] public EventCallback<string> OnColorChanged { get; set; }
+    [Parameter] public EventCallback<string> OnColorSaved { get; set; }
+    [Parameter] public EventCallback OnClose { get; set; }
+
+    private async Task HandleColorInput(ChangeEventArgs e)
+    {
+        var newColor = e.Value?.ToString() ?? CurrentColor;
+        await OnColorChanged.InvokeAsync(newColor);
+    }
+
+    private async Task HandleColorChange(ChangeEventArgs e)
+    {
+        var newColor = e.Value?.ToString() ?? CurrentColor;
+        await OnColorSaved.InvokeAsync(newColor);
+    }
+}

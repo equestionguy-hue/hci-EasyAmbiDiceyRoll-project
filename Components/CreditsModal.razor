@@ -1,0 +1,15 @@
+<div class="modal-backdrop">
+    <div class="credits-modal">
+        <div class="modal-header">
+            <h2>Thanks To</h2>
+            <button class="close-icon-btn" @onclick="OnClose">X</button>
+        </div>
+        <div class="modal-body">
+            <p>Thank you for testing the EasyAmbiDiceyRoll app!</p>
+        </div>
+    </div>
+</div>
+
+@code {
+    [Parameter] public EventCallback OnClose { get; set; }
+}
